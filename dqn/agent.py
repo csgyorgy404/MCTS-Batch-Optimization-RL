@@ -94,33 +94,24 @@ class DeepQNetworkAgent():
                     break
 
 
-    def validate(self,env, episodes):
+    def validate(self,env):
         # rewards = []
-        rewards = 0 #TODO check if this is correct
+        rewards = 0
         
-        for _ in range(episodes):
-            state, _ = env.reset()
+        state, _ = env.reset()
 
-            episode_reward = []
+        while True:
+            action = self.predict(state)
+            next_state, reward, terminated, truncated, _ = env.step(action)
+            next_state = np.array(next_state)
+            done = terminated or truncated
 
-            while True:
-                action = self.predict(state)
-                next_state, reward, terminated, truncated, _ = env.step(action)
-                next_state = np.array(next_state)
-                done = terminated or truncated
+            state = next_state
 
-                state = next_state
+            rewards += reward
 
-                # rewards.append(reward)
-                episode_reward.append(reward)
-
-                if done:
-                    break
-
-            rewards += np.mean(episode_reward)
-
-        # val_reward = np.mean(rewards)
-        
+            if done:
+                break
 
         return rewards
 

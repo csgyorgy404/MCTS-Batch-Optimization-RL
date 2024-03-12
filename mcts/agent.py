@@ -33,7 +33,8 @@ class MCTS():
     def search(self, agent):
         self._init_search(agent)
 
-        for _ in range(self.search_steps):
+        for i in range(self.search_steps):
+            print(f"Step {i+1}/{self.search_steps}")
             v = self.tree_policy()
             reward = self.rollout(v)
             v.backpropagate(reward)
@@ -86,7 +87,7 @@ class MCTS():
 
         agent.train(self.env, self.memory, node.epoch, self.train_episodes)
 
-        val_reward = agent.validate(self.env, self.val_episodes)
+        val_reward = agent.validate(self.env)
 
         print(node.epoch, node.version, val_reward)
 
