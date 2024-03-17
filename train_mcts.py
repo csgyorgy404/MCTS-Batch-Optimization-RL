@@ -87,7 +87,7 @@ def main():
 
     mcts = MCTS(config.mcts.branching_factor,config.mcts.search_steps, config.mcts.train_episodes, config.mcts.validation_episodes, config.mcts.c, memory, env)
 
-    agent = Agent(model, model, 1, config.agent.discount_factor, config.agent.epsilon_decay, config.agent.target_update_frequency)
+    agent = Agent(model, model, 0.997, config.agent.discount_factor, config.agent.epsilon_decay, config.agent.target_update_frequency)
 
     mcts.search(agent)
 

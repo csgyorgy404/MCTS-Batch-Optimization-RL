@@ -70,16 +70,18 @@ class DeepQNetworkAgent():
     # def update_memory(self, **kwargs):
     #     self.memory.update_training_sample_weights(**kwargs)
         
-    def train(self, env, memory, start, end):
+    def train(self, env, memory, start, end, verbose=False):
         print(f"Training from episode {start} to episode {end}")
         for episode in tqdm(range(start, end)):
             state, _ = env.reset()
-
+            rewards = 0
             while True:
                 action = self.predict(state)
                 next_state, reward, terminated, truncated, _ = env.step(action)
                 next_state = np.array(next_state)
                 done = terminated or truncated
+
+                rewards += reward
 
                 state = next_state
      
@@ -92,6 +94,8 @@ class DeepQNetworkAgent():
                         self.update_target_network()
 
                     break
+            if verbose:
+                print(f"Episode {episode+1}/{end}, rewards: {rewards}")
 
 
     def validate(self,env):
@@ -112,6 +116,8 @@ class DeepQNetworkAgent():
 
             if done:
                 break
+
+        print(f"Validation rewards: {rewards}")
 
         return rewards
 
