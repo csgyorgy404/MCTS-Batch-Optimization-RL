@@ -72,6 +72,7 @@ class DeepQNetworkAgent():
         
     def train(self, env, memory, start, end, verbose=False):
         print(f"Training from episode {start} to episode {end}")
+        episode_rewards = []
         for episode in tqdm(range(start, end)):
             state, _ = env.reset()
             rewards = 0
@@ -95,7 +96,17 @@ class DeepQNetworkAgent():
 
                     break
             if verbose:
+                episode_rewards.append(rewards)
                 print(f"Episode {episode+1}/{end}, rewards: {rewards}")
+
+        if verbose:
+            import matplotlib.pyplot as plt
+            
+            plt.plot(episode_rewards)
+            plt.title("Rewards")
+            plt.xlabel("Episode")
+            plt.ylabel("Reward")
+            plt.show()
 
 
     def validate(self,env):

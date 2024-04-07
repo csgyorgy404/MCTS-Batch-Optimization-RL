@@ -1,14 +1,13 @@
 import ast
-import sys
-import networkx as nx
-from treelib import Tree
-import matplotlib.pyplot as plt
+import os
+import torch
+import random
+import numpy as np
 from types import SimpleNamespace
 from configparser import ConfigParser
 
 from env import create_env
 from dqn.model import Model
-from mcts.agent import MCTS
 from memory.stochastic import Buffer
 from dqn.agent import DeepQNetworkAgent as Agent
 
@@ -30,11 +29,24 @@ def read(path):
 
     return conf
 
+def set_seeds(seed):
+    """
+    Setting packages seed
+    """
+    os.environ["PYTHONHASHSEED"] = str(seed)
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+
 
 def main():
     config = read('config.ini')
 
-    env, in_features, out_features = create_env(config.enviroment.name, config.enviroment.render_mode)
+    seed = config.enviroment.seed
+
+    set_seeds(seed)
+
+    env, in_features, out_features = create_env(config.enviroment.name, config.enviroment.render_mode, seed)
 
     model = Model(
         in_features=in_features,

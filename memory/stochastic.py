@@ -52,7 +52,7 @@ class Buffer:
 
                 print(f'Filled memory with {num_of_samples} samples')
 
-                if done:
+                if done or num_of_samples == self.memory_size:
                     break
 
         print(f'Filled memory with {num_of_samples} samples')
