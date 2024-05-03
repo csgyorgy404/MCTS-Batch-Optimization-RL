@@ -9,7 +9,7 @@ from configparser import ConfigParser
 from env import create_env
 from dqn.model import Model
 from memory.stochastic import Buffer
-from dqn.agent import DeepQNetworkAgent as Agent
+from dqn.dqn_agent import DeepQNetworkAgent as Agent
 
 
 def read(path):
@@ -53,12 +53,17 @@ def main():
         hidden_features=config.model.hidden_features,
         out_features=out_features,
         hidden_activation=config.model.hidden_activation,
-        out_activation=config.model.out_activation
+        out_activation=config.model.out_activation,
+        lr=config.model.lr,
     )
+
+    device = next(model.parameters()).device
+
+    print("Model is on device:", device)
 
     memory = Buffer(env, config.memory.size, config.memory.batch_size)
 
-    agent = Agent(model, model, 0.997, config.agent.discount_factor, config.agent.epsilon_decay, config.agent.target_update_frequency)
+    agent = Agent(model, model, config.agent.epsilon_decay, config.agent.discount_factor, config.agent.epsilon_decay, config.agent.target_update_frequency)
 
     memory.fill(agent)
 
