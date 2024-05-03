@@ -163,3 +163,5 @@ cython_debug/
 *.png
 *.txt
 nodes
+
+logs/
