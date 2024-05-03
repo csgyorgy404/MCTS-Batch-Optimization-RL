@@ -3,9 +3,10 @@ import datetime
 import numpy as np
 
 class Node:
-    def __init__(self, epoch, epsilon, parent=None):
+    def __init__(self, epoch, epsilon,  core_reward=None , parent=None):
         self._visits = 0
         self._value = 0.0
+        self._core_reward = core_reward
         self.parent = parent
         self.childrens = []
         self.epoch = epoch
@@ -13,6 +14,10 @@ class Node:
         self.version = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
         
         self._init_paths(str(epoch), self.version)
+
+    @property
+    def core_reward(self):
+        return self._core_reward
 
     @property
     def n(self):
