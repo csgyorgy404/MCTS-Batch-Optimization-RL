@@ -1,6 +1,7 @@
 import os
 import datetime
 import numpy as np
+from uuid import uuid4
 
 class Node:
     def __init__(self, epoch, epsilon,  core_reward=None , parent=None):
@@ -11,13 +12,17 @@ class Node:
         self.childrens = []
         self.epoch = epoch
         self.epsilon = epsilon
-        self.version = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+        self.version = str(uuid4())
         
         self._init_paths(str(epoch), self.version)
 
     @property
     def core_reward(self):
-        return self._core_reward
+        return self._core_reward #1g
+    
+    @core_reward.setter
+    def core_reward(self, value):
+        self._core_reward = value
 
     @property
     def n(self):
@@ -25,7 +30,7 @@ class Node:
     
     @property
     def q(self):
-        return self._value
+        return self._value #1g
     
 
     def _init_paths(self, epoch, version):
@@ -51,8 +56,13 @@ class Node:
         explore = []
 
         for child in self.childrens:
-            exploit.append(child.q / child.n)
-            explore.append(c_value * np.sqrt(2 * np.log(self.n) / child.n))
+            try:
+                exploit.append(child.q / child.n)
+                explore.append(c_value * np.sqrt(2 * np.log(self.n) / child.n))
+            except ZeroDivisionError:
+                exploit.append(0)
+                explore.append(np.inf)
+            
 
         choices_weights = [i + j for i, j in zip(exploit, explore)]
 
@@ -61,5 +71,6 @@ class Node:
         If multiple actions have the same weight, we select one of them randomly
         '''
         indexes = np.where(choices_weights == max_value)[0]
+
 
         return self.childrens[np.random.choice(indexes)]

@@ -2,8 +2,8 @@ import torch
 import random
 import numpy as np
 from tqdm import tqdm
-import torch.nn.functional as F
 from time import time
+import torch.nn.functional as F
 
 
 class DeepQNetworkAgent():
@@ -28,37 +28,38 @@ class DeepQNetworkAgent():
                 # p = int(np.argmax(actions))
             self.model.train()
         else:
+            # p =  np.random.randint(0, 2, 1)[0]
             p =  np.random.randint(0, self.model.out_features, 1)[0]
 
         return p
 
-    def inference(self, state: np.ndarray) -> int:
-        with torch.no_grad():
-            actions = self.model(state).detach().numpy()
-        return np.argmax(actions)[0]
+    # def inference(self, state: np.ndarray) -> int:
+    #     with torch.no_grad():
+    #         actions = self.model(state).detach().numpy()
+    #     return np.argmax(actions)[0]
 
     def decay_epsilon(self):
         self.epsilon *= self.epsilon_decay
 
     def fit(self, memory):
-        states, actions, rewards, next_states, terminals = memory.sample()
+
+        states, actions, rewards, next_states, terminals = memory.sample() #1c batch size?
 
         predicted_q = self.model(states)
         predicted_q = torch.gather(predicted_q, 1, actions.view((-1, 1))).squeeze()
 
-        self.target_model.eval()
+      
         with torch.no_grad():
             target_q = self.target_model(torch.squeeze(next_states))
             target_q = target_q.max(dim=-1)[0]
         target_value = rewards + self.discount_factor * target_q * (1 - terminals)
-        self.target_model.train()
 
         loss = F.mse_loss(predicted_q, target_value)
 
         self.model.optimizer.zero_grad()
         loss.backward()
-        for param in self.model.parameters():
-            param.grad.data.clamp_(-1, 1)
+        # for param in self.model.parameters():
+        #     param.grad.data.clamp_(-1, 1)
         self.model.optimizer.step()
 
         # For passing through the update information of the memory
@@ -79,7 +80,7 @@ class DeepQNetworkAgent():
         episode_timesteps = []
         end_training = False
 
-        for episode in tqdm(range(start, end)):
+        for episode in tqdm(range(start, end)): #1e
             state, _ = env.reset()
             rewards = 0
             losses = 0
@@ -92,6 +93,8 @@ class DeepQNetworkAgent():
                 next_state, reward, terminated, truncated, _ = env.step(action)
                 next_state = np.array(next_state)
                 done = terminated or truncated
+
+                # memory.add(state, action, reward, next_state, done)
 
                 rewards += reward
 
@@ -106,7 +109,7 @@ class DeepQNetworkAgent():
                     episode_rewards.append(rewards)
                     episode_losses.append(losses/timestep)
                     episode_timesteps.append(timestep)
-                    print(f"Episode {episode+1}/{end}, rewards: {rewards}")
+                    # print(f"Episode {episode+1}/{end}, rewards: {rewards}")
 
                     if (episode + 1) % self.target_update_frequency == 0:
                         self.update_target_network()
@@ -115,7 +118,7 @@ class DeepQNetworkAgent():
                     if np.array(episode_timesteps[-100:]).mean() >= 475:
                         end_training = True
 
-                    print(f"Time epoch: {time() - start}")
+                    # print(f"Time epoch: {time() - start}")
 
                     break
             
@@ -143,6 +146,8 @@ class DeepQNetworkAgent():
             plt.tight_layout()
             # plt.show()
             plt.savefig(f'logs/rewards_losses_{time()}.png')
+
+            np.save('rewards.npy', episode_rewards)
 
 
     def validate(self,env):

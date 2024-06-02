@@ -12,10 +12,15 @@ class Buffer:
         self.memory = pd.DataFrame(columns=['state', 'action', 'next_state', 'reward', 'done'])
 
 
-    def add(self, state, action, reward, next_state,  done):
+    def _add(self, state, action, reward, next_state,  done):
         new_row = {'state': state, 'action': action, 'next_state': next_state, 'reward': reward, 'done': done}
 
         self.memory = pd.concat([self.memory, pd.DataFrame([new_row])], ignore_index=True)
+
+    def add(self, state, action, reward, next_state, done):
+        self.memory = self.memory.iloc[1:]
+
+        self._add(state, action, reward, next_state, done)
 
     # def sample(self):
     #     batch = self.memory.sample(self.batch_size)
@@ -52,7 +57,7 @@ class Buffer:
     def fill(self, agent):
         num_of_samples = 0
 
-        while num_of_samples < self.memory_size:
+        while num_of_samples < self.memory_size: #1a
             state, _ = self.env.reset()
 
             while True:
@@ -60,13 +65,13 @@ class Buffer:
                 next_state, reward, terminated, truncated, _ = self.env.step(action)
                 done = terminated or truncated
 
-                self.add(state=state, action=action, reward=reward, next_state=next_state,  done=done)
+                self._add(state=state, action=action, reward=reward, next_state=next_state,  done=done)
 
                 num_of_samples += 1
 
                 state = next_state
 
-                print(f'Filled memory with {num_of_samples} samples')
+                # print(f'Filled memory with {num_of_samples} samples')
 
                 if done or num_of_samples == self.memory_size:
                     break

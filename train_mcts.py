@@ -1,17 +1,16 @@
-import ast
-import sys
 import os
+import ast
+import copy
 import torch
 import random
+import shutil
 import numpy as np
-import networkx as nx
-from treelib import Tree
-import matplotlib.pyplot as plt
 from types import SimpleNamespace
 from configparser import ConfigParser
 
 from env import create_env
 from dqn.model import Model
+from visualise import print_tree
 from mcts.mcts_agent import MCTS
 from memory.stochastic import Buffer
 from dqn.dqn_agent import DeepQNetworkAgent as Agent
@@ -33,23 +32,6 @@ def read(path):
     conf = SimpleNamespace(**conf_dict)
 
     return conf
-
-
-def print_tree(node, title):
-    tree = Tree()
-
-    def add_nodes_to_tree(node, tree, parent_id=None):
-        node_tag = f"e: {node.epoch}, n: {node.n}, q: {node.q}, X: {node.core_reward}"  # Include n and q values in the node tag
-        current_id = tree.create_node(tag=node_tag, data=node, parent=parent_id)
-        for child in node.childrens:
-            add_nodes_to_tree(child, tree, parent_id=current_id)
-
-    add_nodes_to_tree(node, tree)
-
-    with open(f"{title}_structure.txt", "w") as f:
-        sys.stdout = f
-        print(tree.show(stdout=False))
-        sys.stdout = sys.__stdout__
 
 
 def set_seeds(seed):
@@ -79,16 +61,37 @@ def main():
         lr=config.model.lr,
     )
 
+    device = next(model.parameters()).device
+
+    print("Model is on device:", device)
+
     memory = Buffer(env, config.memory.size, config.memory.batch_size)
 
-    mcts = MCTS(config.mcts.branching_factor,config.mcts.search_steps, config.mcts.train_episodes, config.mcts.validation_episodes, config.mcts.c, memory, env)
+    mcts = MCTS(config.mcts.branching_factor, config.mcts.train_episodes, config.mcts.c, memory, env)
 
-    agent = Agent(model, model, config.agent.epsilon_decay, config.agent.discount_factor, config.agent.epsilon_decay, config.agent.target_update_frequency)
+    agent = Agent(model, copy.deepcopy(model), config.agent.epsilon_decay, config.agent.discount_factor, config.agent.epsilon_decay, config.agent.target_update_frequency)
 
-    best = mcts.search(agent)
+    try:
+        root = mcts.search(agent)
+        best = mcts.best_branch(root)
+    except KeyboardInterrupt:
+        best = mcts.best_branch(mcts.root)
 
+    rewards = []
+    start = best
+
+    while len(start.childrens) > 0:
+        rewards.append(start.core_reward)
+        start = start.childrens[0]
+
+    np.save('rewards_mcts.npy', rewards)
+        
     print_tree(best, 'best')
     print_tree(mcts.root, 'all')
+
+    shutil.rmtree('nodes/')
+
+
 
 
 if __name__ == "__main__":

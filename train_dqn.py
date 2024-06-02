@@ -1,5 +1,6 @@
 import ast
 import os
+import copy
 import torch
 import random
 import numpy as np
@@ -63,13 +64,13 @@ def main():
 
     memory = Buffer(env, config.memory.size, config.memory.batch_size)
 
-    agent = Agent(model, model, config.agent.epsilon_decay, config.agent.discount_factor, config.agent.epsilon_decay, config.agent.target_update_frequency)
+    agent = Agent(model, copy.deepcopy(model), config.agent.epsilon_decay, config.agent.discount_factor, config.agent.epsilon_decay, config.agent.target_update_frequency)
 
     memory.fill(agent)
 
     agent.train(env, memory, 0, config.mcts.train_episodes, True)
 
-    agent.validate(env)
+    print(agent.validate(env))
 
   
 
