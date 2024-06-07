@@ -18,25 +18,24 @@ class DeepQNetworkAgent():
         
 
     def predict(self, state: np.ndarray) -> int:
-        if self.epsilon < random.random():
-            self.model.eval()
-            with torch.no_grad():
-                actions = self.model(torch.reshape(torch.tensor(state, dtype=torch.float32),
-                                                                 shape=(1, self.model.in_features)))
-                                                                #  shape=(1, self.model.in_features))).detach().cpu().numpy()
-                p = int(torch.argmax(actions.cpu()))
-                # p = int(np.argmax(actions))
-            self.model.train()
-        else:
-            # p =  np.random.randint(0, 2, 1)[0]
+        if self.epsilon > random.random():
             p =  np.random.randint(0, self.model.out_features, 1)[0]
+          
+        else:
+            p = self.inference(state)
 
         return p
 
-    # def inference(self, state: np.ndarray) -> int:
-    #     with torch.no_grad():
-    #         actions = self.model(state).detach().numpy()
-    #     return np.argmax(actions)[0]
+    def inference(self, state: np.ndarray) -> int:
+        self.model.eval()
+        with torch.no_grad():
+            actions = self.model(torch.reshape(torch.tensor(state, dtype=torch.float32),
+                                                                shape=(1, self.model.in_features)))
+                                                            #  shape=(1, self.model.in_features))).detach().cpu().numpy()
+            p = int(torch.argmax(actions.cpu()))
+        self.model.train()
+
+        return p
 
     def decay_epsilon(self):
         self.epsilon *= self.epsilon_decay
@@ -58,106 +57,110 @@ class DeepQNetworkAgent():
 
         self.model.optimizer.zero_grad()
         loss.backward()
-        # for param in self.model.parameters():
-        #     param.grad.data.clamp_(-1, 1)
-        self.model.optimizer.step()
 
-        # For passing through the update information of the memory
-        # with torch.no_grad():
-        #     argmax_labels = predicted_q.max(dim=-1)[0].detach().cpu().numpy()
-        #     td_error = target_value - predicted_q
-        # self.update_memory(td_errors=td_error, labels=argmax_labels)
+        self.model.optimizer.step()
 
         return loss
 
-    # def update_memory(self, **kwargs):
-    #     self.memory.update_training_sample_weights(**kwargs)
+  
         
     def train(self, env, memory, start, end, verbose=False):
         print(f"Training from episode {start} to episode {end}")
-        episode_rewards = []
-        episode_losses = []
-        episode_timesteps = []
-        end_training = False
 
         for episode in tqdm(range(start, end)): #1e
-            state, _ = env.reset()
-            rewards = 0
-            losses = 0
-            timestep = 0
+            _ =  self.fit(memory)
 
-            start = time()
-            while True:
-                timestep += 1
-                action = self.predict(state)
-                next_state, reward, terminated, truncated, _ = env.step(action)
-                next_state = np.array(next_state)
-                done = terminated or truncated
+            if episode % self.target_update_frequency == 0:
+                self.update_target_network()
 
-                # memory.add(state, action, reward, next_state, done)
 
-                rewards += reward
+          
+    # def train(self, env, memory, start, end, verbose=False):
+    #     print(f"Training from episode {start} to episode {end}")
+    #     episode_rewards = []
+    #     episode_losses = []
+    #     episode_timesteps = []
+    #     end_training = False
 
-                state = next_state
+    #     for episode in tqdm(range(start, end)): #1e
+    #         state, _ = env.reset()
+    #         rewards = 0
+    #         losses = 0
+    #         timestep = 0
 
-                loss =  self.fit(memory)
-                losses += loss.detach().cpu().numpy()
+    #         start = time()
+    #         while True:
+    #             timestep += 1
+    #             action = self.predict(state)
+    #             next_state, reward, terminated, truncated, _ = env.step(action)
+    #             next_state = np.array(next_state)
+    #             done = terminated or truncated
 
-                if done:
-                    self.decay_epsilon()
+    #             memory.add(state, action, reward, next_state, done)
 
-                    episode_rewards.append(rewards)
-                    episode_losses.append(losses/timestep)
-                    episode_timesteps.append(timestep)
-                    # print(f"Episode {episode+1}/{end}, rewards: {rewards}")
+    #             rewards += reward
 
-                    if (episode + 1) % self.target_update_frequency == 0:
-                        self.update_target_network()
+    #             state = next_state
 
-                    #early stopping
-                    if np.array(episode_timesteps[-100:]).mean() >= 475:
-                        end_training = True
+    #             # done = True
 
-                    # print(f"Time epoch: {time() - start}")
+    #             if done:
+    #                 loss =  self.fit(memory)
+    #                 self.decay_epsilon()
 
-                    break
+    #                 # print(f'Episode {episode}: {self.epsilon}')
+
+    #                 episode_rewards.append(rewards)
+    #                 episode_losses.append(losses/timestep)
+    #                 episode_timesteps.append(timestep)
+    #                 # print(f"Episode {episode+1}/{end}, rewards: {rewards}")
+
+    #                 if (episode + 1) % self.target_update_frequency == 0:
+    #                     self.update_target_network()
+
+    #                 #early stopping
+    #                 if np.array(episode_timesteps[-100:]).mean() >= 475:
+    #                     end_training = True
+
+    #                 # print(f"Time epoch: {time() - start}")
+
+    #                 break
             
-            if end_training:
-                break
+    #         if end_training:
+    #             break
 
-        if verbose:
-            import matplotlib.pyplot as plt
+    #     if verbose:
+    #         import matplotlib.pyplot as plt
             
-            plt.figure(figsize=(12, 6))
+    #         plt.figure(figsize=(12, 6))
 
-            plt.subplot(1, 2, 1)
-            plt.plot(episode_rewards)
-            plt.title("Rewards")
-            plt.xlabel("Episode")
-            plt.ylabel("Reward")
+    #         plt.subplot(1, 2, 1)
+    #         plt.plot(episode_rewards)
+    #         plt.title("Rewards")
+    #         plt.xlabel("Episode")
+    #         plt.ylabel("Reward")
 
-            # Plotting losses
-            plt.subplot(1, 2, 2)
-            plt.plot(episode_losses)
-            plt.title("Losses")
-            plt.xlabel("Episode")
-            plt.ylabel("Loss")
+    #         # Plotting losses
+    #         plt.subplot(1, 2, 2)
+    #         plt.plot(episode_losses)
+    #         plt.title("Losses")
+    #         plt.xlabel("Episode")
+    #         plt.ylabel("Loss")
 
-            plt.tight_layout()
-            # plt.show()
-            plt.savefig(f'logs/rewards_losses_{time()}.png')
+    #         plt.tight_layout()
+    #         # plt.show()
+    #         plt.savefig(f'logs/rewards_losses_{time()}.png')
 
-            np.save('rewards.npy', episode_rewards)
+    #         np.save('rewards.npy', episode_rewards)
 
 
     def validate(self,env):
-        # rewards = []
         rewards = 0
         
         state, _ = env.reset()
 
         while True:
-            action = self.predict(state)
+            action = self.inference(state)
             next_state, reward, terminated, truncated, _ = env.step(action)
             next_state = np.array(next_state)
             done = terminated or truncated

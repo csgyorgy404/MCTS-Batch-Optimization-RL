@@ -9,16 +9,16 @@ class Buffer:
         self.env = env
         self.memory_size = memory_size
         self.batch_size = batch_size
-        self.memory = pd.DataFrame(columns=['state', 'action', 'next_state', 'reward', 'done'])
+        self.data = pd.DataFrame(columns=['state', 'action', 'next_state', 'reward', 'done'])
 
 
     def _add(self, state, action, reward, next_state,  done):
         new_row = {'state': state, 'action': action, 'next_state': next_state, 'reward': reward, 'done': done}
 
-        self.memory = pd.concat([self.memory, pd.DataFrame([new_row])], ignore_index=True)
+        self.data = pd.concat([self.data, pd.DataFrame([new_row])], ignore_index=True)
 
     def add(self, state, action, reward, next_state, done):
-        self.memory = self.memory.iloc[1:]
+        self.data = self.data.iloc[1:]
 
         self._add(state, action, reward, next_state, done)
 
@@ -39,7 +39,7 @@ class Buffer:
 
     #     return state, action, reward, next_state, done
     def sample(self):
-        batch = self.memory.sample(self.batch_size)
+        batch = self.data.sample(self.batch_size)
 
         # Convert batch DataFrame to numpy array
         batch_np = batch.to_numpy()
@@ -70,8 +70,6 @@ class Buffer:
                 num_of_samples += 1
 
                 state = next_state
-
-                # print(f'Filled memory with {num_of_samples} samples')
 
                 if done or num_of_samples == self.memory_size:
                     break

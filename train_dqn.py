@@ -64,7 +64,7 @@ def main():
 
     memory = Buffer(env, config.memory.size, config.memory.batch_size)
 
-    agent = Agent(model, copy.deepcopy(model), config.agent.epsilon_decay, config.agent.discount_factor, config.agent.epsilon_decay, config.agent.target_update_frequency)
+    agent = Agent(model, copy.deepcopy(model), 1, config.agent.discount_factor, config.agent.epsilon_decay, config.agent.target_update_frequency)
 
     memory.fill(agent)
 

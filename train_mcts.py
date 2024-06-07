@@ -1,3 +1,6 @@
+import sys
+sys.setrecursionlimit(1000000)
+
 import os
 import ast
 import copy
@@ -69,10 +72,11 @@ def main():
 
     mcts = MCTS(config.mcts.branching_factor, config.mcts.train_episodes, config.mcts.c, memory, env)
 
-    agent = Agent(model, copy.deepcopy(model), config.agent.epsilon_decay, config.agent.discount_factor, config.agent.epsilon_decay, config.agent.target_update_frequency)
+    agent = Agent(model, copy.deepcopy(model), 1,  config.agent.discount_factor, config.agent.epsilon_decay, config.agent.target_update_frequency)
+
 
     try:
-        root = mcts.search(agent)
+        root = mcts.search(agent, False)
         best = mcts.best_branch(root)
     except KeyboardInterrupt:
         best = mcts.best_branch(mcts.root)

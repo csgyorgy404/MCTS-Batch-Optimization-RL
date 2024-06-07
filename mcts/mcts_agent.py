@@ -3,6 +3,7 @@ sys.path.append('/')
 
 import torch
 from copy import deepcopy
+import matplotlib.pyplot as plt
 
 from mcts.node import Node
 from dqn.dqn_agent import DeepQNetworkAgent as Agent
@@ -36,20 +37,50 @@ class MCTS():
         torch.save(agent.model.state_dict(), self.root.target_path)
 
 
-    def search(self, agent):
+    def search(self, agent, visualise=False):
         self._init_search(agent)
         self.do_search = True
 
-        # for i in range(self.search_steps):
         while True:
-            # print(f"Step {i+1}/{self.search_steps}")
             v = self.tree_policy()
+
             if not self.do_search:
                 break
             reward = self.rollout(v)
+
+            if visualise:
+                self.best_branch_visualisation(self.root)
+
             v.backpropagate(reward) #1f
         
         return self.root
+    
+
+    def best_branch_visualisation(self, node):
+        
+        best = self.best_branch(node)
+
+        start = False
+
+        if len(best.childrens) > 0:
+            self.best_branch_visualisation(best.childrens[0])
+        else:
+            start = True
+
+        rewards = []
+        start = best
+
+        while len(start.childrens) > 0:
+            rewards.append(start.core_reward)
+            start = start.childrens[0]
+
+        plt.plot(rewards)
+        plt.ylim(0, 200)
+        plt.xlim(0,self.train_episodes)
+        plt.pause(0.0001)
+        plt.cla()
+        plt.show(block=False)
+  
 
     def best_branch(self, node):
 
@@ -103,7 +134,6 @@ class MCTS():
 
         core_reward = agent.validate(self.env)
 
-        # child_node = Node(node.epoch + 1, epsilon, core_reward=None, parent=node)
         child_node = Node(node.epoch + 1, epsilon, core_reward=core_reward, parent=node)
         node.childrens.append(child_node)
 
