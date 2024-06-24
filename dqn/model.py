@@ -3,8 +3,6 @@ import torch.nn as nn
 from torch.nn import Sequential
 from torch.optim import Adam, SGD, Adagrad
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
 class Model(nn.Module):
     def __init__(self, in_features, hidden_features, out_features, hidden_activation='relu', out_activation=None, optimizer_type='adam', lr=1e-3, **kwargs):
         super().__init__(**kwargs)
@@ -48,22 +46,22 @@ class Model(nn.Module):
     def _create_model(self):
         activation = self._get_activation(self.hidden_activation)
 
-        layers = [nn.Linear(self.in_features, self.hidden_features[0]), activation]
+        layers = []
+        
+        start_dim = self.in_features
 
         for n in self.hidden_features:
             layers.extend([
-                nn.Linear(n, n),
+                nn.Linear(start_dim, n),
                 activation
             ])
+            start_dim = n
 
-        layers.extend([nn.Linear(self.hidden_features[-1], self.out_features), self._get_activation(self.out_activation)])
+        layers.extend([nn.Linear(start_dim, self.out_features), self._get_activation(self.out_activation)])
 
         model = Sequential(*layers)
-
-        model.to(device)
 
         return model
 
     def forward(self, x):
-        x = x.to(device)
         return self.model(x)

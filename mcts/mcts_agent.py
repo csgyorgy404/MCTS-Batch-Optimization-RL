@@ -154,7 +154,7 @@ class MCTS():
         agent = Agent(self._base_dqn_model, self._base_dqn_target_model, node.epsilon, self.discount_factor, self.epsilon_decay, self.target_update_frequency)
 
         #2a comment out the line below
-        agent.train(self.env, self.memory, node.epoch, self.train_episodes) #1e
+        agent.train_no_interaction(self.env, self.memory, node.epoch, self.train_episodes) #1e
 
         val_reward = agent.validate(self.env) #1f
 
