@@ -128,7 +128,7 @@ class DeepQNetworkAgent():
             action = self.inference_predict(state)
             next_state, reward, done = env.step(action)
 
-            env.render()
+            # env.render()
 
             state = next_state
 
