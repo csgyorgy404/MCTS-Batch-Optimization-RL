@@ -44,7 +44,7 @@ class DeepQNetworkAgent():
 
     def fit(self, memory):
 
-        states, actions, rewards, next_states, terminals = memory.sample() #1c batch size?
+        states, actions, rewards, next_states, terminals = memory.sample()
 
         predicted_q = self.model(states)
         predicted_q = torch.gather(predicted_q, 1, actions.view((-1, 1))).squeeze()
@@ -66,7 +66,7 @@ class DeepQNetworkAgent():
     def train_no_interaction(self, env, memory, start, end, verbose=False):
         print(f"Training from episode {start} to episode {end}")
 
-        for episode in tqdm(range(start, end)): #1e
+        for episode in tqdm(range(start, end)):
             self.fit(memory)
 
             if episode % self.target_update_frequency == 0:
@@ -79,7 +79,7 @@ class DeepQNetworkAgent():
         episode_rewards = []
         end_training = False
 
-        for episode in tqdm(range(start, end)): #1e
+        for episode in tqdm(range(start, end)):
             state = env.reset()
             rewards = 0
 

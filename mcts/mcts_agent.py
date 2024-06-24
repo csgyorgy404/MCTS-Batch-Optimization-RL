@@ -31,7 +31,7 @@ class MCTS():
 
         core_reward = agent.validate(self.env)
 
-        self.root = Node(0, 1, core_reward=core_reward, parent=None) #TODO is it good to give core reward to root node?
+        self.root = Node(0, 1, core_reward=core_reward, parent=None)
 
         torch.save(agent.model.state_dict(), self.root.main_path)
         torch.save(agent.model.state_dict(), self.root.target_path)
@@ -51,7 +51,7 @@ class MCTS():
             if visualise:
                 self.best_branch_visualisation(self.root)
 
-            v.backpropagate(reward) #1f
+            v.backpropagate(reward)
         
         return self.root
     
@@ -117,9 +117,9 @@ class MCTS():
     
 
     def is_terminal_node(self, node: Node):
-        return node.epoch == self.train_episodes-1 #1h
+        return node.epoch == self.train_episodes-1
 
-    def is_fully_expanded(self, node: Node): #1b
+    def is_fully_expanded(self, node: Node):
         return True if len(node.childrens) == self.branching_factor else False
 
     def expand(self, node):
@@ -130,7 +130,7 @@ class MCTS():
 
         agent = Agent(self._base_dqn_model, self._base_dqn_target_model, epsilon, self.discount_factor, self.epsilon_decay, self.target_update_frequency)
 
-        agent.fit(self.memory) #1d
+        agent.fit(self.memory)
 
         core_reward = agent.validate(self.env)
 
@@ -153,13 +153,9 @@ class MCTS():
 
         agent = Agent(self._base_dqn_model, self._base_dqn_target_model, node.epsilon, self.discount_factor, self.epsilon_decay, self.target_update_frequency)
 
-        #2a comment out the line below
-        agent.train_no_interaction(self.env, self.memory, node.epoch, self.train_episodes) #1e
+        agent.train_no_interaction(self.env, self.memory, node.epoch, self.train_episodes)
 
-        val_reward = agent.validate(self.env) #1f
-
-        # if node.core_reward is None: #1f
-        #     node.core_reward = val_reward
+        val_reward = agent.validate(self.env)
 
         print(f'e: {node.epoch}, v: {node.version}, core_r: {node.core_reward}, val_r: {val_reward}')
 

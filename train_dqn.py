@@ -39,7 +39,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-#taxi no one hot
-#check cliffwalking termination state
-#figure out something for frozenlake reward
