@@ -8,7 +8,6 @@ import numpy as np
 from utils import *
 from env import Env
 from dqn.model import Model
-from visualise import print_tree
 from mcts.mcts_agent import MCTS
 from memory.stochastic import Buffer
 from dqn.dqn_agent import DeepQNetworkAgent as Agent
@@ -36,7 +35,7 @@ def main():
 
     memory = Buffer(env, config.memory.size, config.memory.batch_size)
 
-    mcts = MCTS(config.mcts.branching_factor, config.mcts.train_episodes, config.mcts.c, memory, env)
+    mcts = MCTS(config.mcts.branching_factor, config.mcts.train_episodes,config.mcts.window, config.mcts.c, memory, env)
 
     agent = Agent(model, copy.deepcopy(model), 1,  config.agent.discount_factor, config.agent.epsilon_decay, config.agent.target_update_frequency)
 
@@ -54,12 +53,12 @@ def main():
         rewards.append(start.core_reward)
         start = start.childrens[0]
 
-    np.save('rewards_mcts.npy', rewards)
+    np.save(f'rewards_mcts_{env.name}_{config.mcts.window}.npy', rewards)
         
-    print_tree(best, 'best')
-    print_tree(mcts.root, 'all')
+    # print_tree(best, 'best')
+    # print_tree(mcts.root, 'all')
 
-    shutil.rmtree('nodes/')
+    # shutil.rmtree('nodes/')
 
 
 if __name__ == "__main__":

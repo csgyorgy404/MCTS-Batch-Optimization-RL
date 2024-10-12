@@ -10,7 +10,7 @@ from configparser import ConfigParser
 
 def get_args():
     parser = argparse.ArgumentParser(description='Configuration file for training')
-    parser.add_argument('--config', '-c', type=str, default='cartpole.ini', help='Configuration file')
+    parser.add_argument('config', type=str, default='cartpole.ini', help='Configuration file')
     return parser.parse_args()
 
 def read(path):

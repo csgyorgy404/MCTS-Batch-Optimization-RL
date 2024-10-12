@@ -11,6 +11,7 @@ class Model(nn.Module):
         self.out_features = out_features
         self.hidden_activation = hidden_activation
         self.out_activation = out_activation
+        self.flatten = nn.Flatten()
 
         self.model = self._create_model()
         self.optimizer = self._get_optimizer(optimizer_type, lr)
@@ -64,4 +65,6 @@ class Model(nn.Module):
         return model
 
     def forward(self, x):
+        if len(x.shape) == 3:
+            x = self.flatten(x)
         return self.model(x)

@@ -68,6 +68,7 @@ class DeepQNetworkAgent():
 
         for episode in tqdm(range(start, end)):
             self.fit(memory)
+            self.decay_epsilon()
 
             if episode % self.target_update_frequency == 0:
                 self.update_target_network()
@@ -115,7 +116,7 @@ class DeepQNetworkAgent():
         if verbose:
             print(f"Episode {episode+1}/{end}, rewards: {rewards}, epsilon: {self.epsilon}")
 
-            torch.save(self.model , 'model.pth')
+            torch.save(self.model.state_dict(), f'model_{env.name}.pth')
             np.save('rewards.npy', episode_rewards)
 
 
@@ -128,12 +129,25 @@ class DeepQNetworkAgent():
             action = self.inference_predict(state)
             next_state, reward, done = env.step(action)
 
-            # env.render()
-
             state = next_state
 
-            if reward == -100:
-                pass
+            rewards += reward
+
+            if done:
+                break
+
+        return rewards
+    
+    def validate_random(self,env):
+        rewards = 0
+        
+        state = env.reset()
+
+        while True:
+            action = self.train_predict(state)
+            next_state, reward, done = env.step(action)
+
+            state = next_state
 
             rewards += reward
 

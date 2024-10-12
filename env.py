@@ -1,13 +1,18 @@
 import numpy as np
 import gymnasium as gym
+from numpy import cos, sin
 
 class Env:
     def __init__(self, env_name, max_steps=None, render_mode=None, seed=42):
+        self.name = env_name
         self.seed = seed
         self.max_steps = max_steps
         self._start_steps = 0
         try:
-            self.gym_env = gym.make(env_name, render_mode=render_mode)
+            if env_name == 'FrozenLake-v1':
+                self.gym_env = gym.make(env_name,render_mode=render_mode, is_slippery=False)
+            else:
+                self.gym_env = gym.make(env_name, render_mode=render_mode)
         except gym.error.NameNotFound:
             raise ValueError(f"{env_name} environment is not implemented or"
                                 f" not found in the official gym repository")
@@ -15,6 +20,8 @@ class Env:
     @property
     def in_features(self):
         try:
+            if len(self.gym_env.observation_space.shape) > 1:
+                return self.gym_env.observation_space.shape[0] * self.gym_env.observation_space.shape[1]
             return self.gym_env.observation_space.shape[0]
         except:
             return self.gym_env.observation_space.n
@@ -45,7 +52,26 @@ class Env:
         # return state
 
     def step(self, action):
+        prev_action = None
+
         next_state, reward, terminated, truncated, _ = self.gym_env.step(action)
+
+        if self.name == 'CliffWalking-v0':
+            if prev_action == 0 and action == 2:
+                terminated = True
+            elif prev_action == 1 and action == 3:
+                terminated = True
+            elif prev_action == 2 and action == 0:
+                terminated = True
+            elif prev_action == 3 and action == 1:
+                terminated = True
+        elif self.name == 'Acrobot-v1':
+            state = self.gym_env.state
+
+            height = -cos(state[0]) - cos(state[1] + state[0])
+        
+            reward += height * 0.01
+
 
         self._start_steps += 1
 

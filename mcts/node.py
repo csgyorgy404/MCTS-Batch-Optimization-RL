@@ -57,9 +57,9 @@ class Node:
 
         for child in self.childrens:
             try:
-                exploit.append(child.q / child.n)
+                exploit.append((child.q + child.core_reward) / child.n)
                 explore.append(c_value * np.sqrt(2 * np.log(self.n) / child.n))
-            except ZeroDivisionError:
+            except:
                 exploit.append(0)
                 explore.append(np.inf)
             
@@ -72,5 +72,8 @@ class Node:
         '''
         indexes = np.where(choices_weights == max_value)[0]
 
-
-        return self.childrens[np.random.choice(indexes)]
+        try:
+            return self.childrens[np.random.choice(indexes)]
+        except:
+            return None
+        # return self.childrens[np.random.choice(indexes)]

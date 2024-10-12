@@ -10,12 +10,13 @@ from dqn.dqn_agent import DeepQNetworkAgent as Agent
 
 
 class MCTS():
-    def __init__(self, branching_factor, train_episodes, c_value, memory, env) -> None:
+    def __init__(self, branching_factor, train_episodes,window, c_value, memory, env) -> None:
         self.branching_factor = branching_factor
         self.train_episodes = train_episodes
         self.c_param = c_value
         self.memory = memory
         self.env = env
+        self.window = window
 
     def _init_search(self, agent):
         self._base_dqn_model = agent.model
@@ -91,6 +92,9 @@ class MCTS():
                 return
             
             best_child = node.best_child(self.c_param)
+            if best_child is None:
+                return
+            
             node.childrens = [best_child]
 
             return _best_branch(best_child)
@@ -129,10 +133,14 @@ class MCTS():
         epsilon = node.epsilon*self.epsilon_decay
 
         agent = Agent(self._base_dqn_model, self._base_dqn_target_model, epsilon, self.discount_factor, self.epsilon_decay, self.target_update_frequency)
+        
+        # for _ in range(5):
+        #     agent.fit(self.memory)
 
         agent.fit(self.memory)
 
-        core_reward = agent.validate(self.env)
+        # core_reward = agent.validate(self.env)
+        core_reward = agent.validate_random(self.env)
 
         child_node = Node(node.epoch + 1, epsilon, core_reward=core_reward, parent=node)
         node.childrens.append(child_node)
@@ -153,9 +161,15 @@ class MCTS():
 
         agent = Agent(self._base_dqn_model, self._base_dqn_target_model, node.epsilon, self.discount_factor, self.epsilon_decay, self.target_update_frequency)
 
-        agent.train_no_interaction(self.env, self.memory, node.epoch, self.train_episodes)
+        if node.epoch+self.window < self.train_episodes:
+            agent.train_no_interaction(self.env, self.memory, node.epoch, node.epoch+self.window)
+        else:
+            # agent.train_no_interaction(self.env, self.memory, node.epoch, self.train_episodes-(node.epoch+self.window))
+            agent.train_no_interaction(self.env, self.memory, node.epoch,self.window)
+        # agent.train_no_interaction(self.env, self.memory, node.epoch, self.train_episodes)
 
-        val_reward = agent.validate(self.env)
+        # val_reward = agent.validate(self.env)
+        val_reward = agent.validate_random(self.env)
 
         print(f'e: {node.epoch}, v: {node.version}, core_r: {node.core_reward}, val_r: {val_reward}')
 
