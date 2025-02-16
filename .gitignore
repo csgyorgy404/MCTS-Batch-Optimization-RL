@@ -164,4 +164,8 @@ cython_debug/
 *.txt
 nodes
 
+.vscode/
+
 logs/
+nodes/
+*.npy
